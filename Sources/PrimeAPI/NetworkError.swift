@@ -1,10 +1,3 @@
-//
-//  NetworkError.swift
-//  
-//
-//  Created by Jeevan on 29/07/23.
-//
-
 import Foundation
 
 public enum NetworkError: Error {
