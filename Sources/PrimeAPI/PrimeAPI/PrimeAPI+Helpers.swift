@@ -64,6 +64,10 @@ extension PrimeAPI {
         self.authorizationToken = token
     }
     
+    public func logsRequestAndResponseToConsole(enable: Bool) {
+        self.enableLogging = enable
+    }
+    
     /// Print request details in the console
     func logRequestDetails(
         url: URL,

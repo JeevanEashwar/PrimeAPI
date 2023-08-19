@@ -49,8 +49,10 @@ extension PrimeAPI {
                           (200...299).contains(httpResponse.statusCode) else {
                         throw NetworkError.responseError
                     }
-                    self.logRequestDetails(url: url, headers: request.allHTTPHeaderFields, httpMethod: httpMethod, requestBody: body)
-                    self.logResponseDetails(response: httpResponse, responseBody: data)
+                    if (self.enableLogging) {
+                        self.logRequestDetails(url: url, headers: request.allHTTPHeaderFields, httpMethod: httpMethod, requestBody: body)
+                        self.logResponseDetails(response: httpResponse, responseBody: data)
+                    }
                     return data
                 }
                 .tryMap { data in
