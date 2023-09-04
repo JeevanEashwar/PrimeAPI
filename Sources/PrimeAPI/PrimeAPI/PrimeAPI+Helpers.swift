@@ -27,28 +27,6 @@ extension PrimeAPI {
         return finalURL
     }
     
-    /// Adds basic headers to a URLRequest.
-    ///
-    /// - Parameters:
-    ///   - request: The inout URLRequest to which the headers will be added.
-    ///   - httpMethod: The HTTP method to be set for the request.
-    ///   - body: A dictionary representing the request body, if applicable.
-    public func addBasicHeaders(
-        to request: inout URLRequest,
-        httpMethod: String,
-        body: [String: Any]?
-    ) {
-        request.httpMethod = httpMethod
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-        if let authorizationHeader = authorizationToken {
-            request.addValue("Bearer \(authorizationHeader)", forHTTPHeaderField: "Authorization")
-        }
-        if let body = body {
-            request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
-        }
-    }
-    
     /// Configures the authorization header for future network requests.
     ///
     /// - Parameter token: The authorization token value to be set. Do not include Bearer.

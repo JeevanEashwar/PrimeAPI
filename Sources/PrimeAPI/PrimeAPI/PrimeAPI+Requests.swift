@@ -9,8 +9,8 @@ extension PrimeAPI {
     ///   - parameters: A dictionary containing query parameters to be appended to the URL, if needed.
     ///   - model: The type to which the response will be decoded.
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
-    public func get<T: Decodable>(from url: URL, parameters: [String: Any]?, mapResponseTo model: T.Type) -> Future<T, Error> {
-        return makeNetworkCall(url: url, parameters: parameters, body: nil, httpMethod: HTTPMethod.GET.rawValue, mapResponseTo: model)
+    public func get<T: Decodable>(from url: URL, parameters: [String: String]?, mapResponseTo model: T.Type) -> Future<T, Error> {
+        return makeNetworkCall(url: url, parameters: parameters, body: nil, httpMethod: HTTPMethod.GET, mapResponseTo: model)
     }
     
     /// Performs an HTTP POST request to the specified URL.
@@ -21,8 +21,8 @@ extension PrimeAPI {
     ///   - body: A dictionary representing the request body.
     ///   - model: The type to which the response will be decoded.
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
-    public func post<T: Decodable>(to url: URL, parameters: [String: Any], body: [String: Any], mapResponseTo model: T.Type) -> Future<T, Error> {
-        return makeNetworkCall(url: url, parameters: parameters, body: body, httpMethod: HTTPMethod.POST.rawValue, mapResponseTo: model)
+    public func post<T: Decodable>(to url: URL, parameters: [String: String], body: [String: Any], mapResponseTo model: T.Type) -> Future<T, Error> {
+        return makeNetworkCall(url: url, parameters: parameters, body: body, httpMethod: HTTPMethod.POST, mapResponseTo: model)
     }
     
     /// Performs an HTTP PUT request to the specified URL.
@@ -33,8 +33,8 @@ extension PrimeAPI {
     ///   - body: A dictionary representing the request body.
     ///   - model: The type to which the response will be decoded.
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
-    public func put<T: Decodable>(to url: URL, parameters: [String: Any], body: [String: Any], mapResponseTo model: T.Type) -> Future<T, Error> {
-        return makeNetworkCall(url: url, parameters: parameters, body: body, httpMethod: HTTPMethod.PUT.rawValue, mapResponseTo: model)
+    public func put<T: Decodable>(to url: URL, parameters: [String: String], body: [String: Any], mapResponseTo model: T.Type) -> Future<T, Error> {
+        return makeNetworkCall(url: url, parameters: parameters, body: body, httpMethod: HTTPMethod.PUT, mapResponseTo: model)
     }
     
     /// Performs an HTTP PATCH request to the specified URL.
@@ -45,8 +45,8 @@ extension PrimeAPI {
     ///   - body: A dictionary representing the request body.
     ///   - model: The type to which the response will be decoded.
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
-    public func patch<T: Decodable>(to url: URL, parameters: [String: Any], body: [String: Any], mapResponseTo model: T.Type) -> Future<T, Error> {
-        return makeNetworkCall(url: url, parameters: parameters, body: body, httpMethod: HTTPMethod.PATCH.rawValue, mapResponseTo: model)
+    public func patch<T: Decodable>(to url: URL, parameters: [String: String], body: [String: Any], mapResponseTo model: T.Type) -> Future<T, Error> {
+        return makeNetworkCall(url: url, parameters: parameters, body: body, httpMethod: HTTPMethod.PATCH, mapResponseTo: model)
     }
     
     /// Performs an HTTP DELETE request to the specified URL.
@@ -56,6 +56,6 @@ extension PrimeAPI {
     ///   - model: The type to which the response will be decoded.
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
     public func delete<T: Decodable>(to url: URL, mapResponseTo model: T.Type) -> Future<T, Error> {
-        return makeNetworkCall(url: url, parameters: nil, body: nil, httpMethod: HTTPMethod.DELETE.rawValue, mapResponseTo: model)
+        return makeNetworkCall(url: url, parameters: nil, body: nil, httpMethod: HTTPMethod.DELETE, mapResponseTo: model)
     }
 }

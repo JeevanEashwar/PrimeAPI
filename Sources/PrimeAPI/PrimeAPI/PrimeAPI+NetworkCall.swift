@@ -20,29 +20,23 @@ extension PrimeAPI {
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
     public func makeNetworkCall<T: Decodable>(
         url: URL,
-        parameters: [String: Any]?,
+        parameters: [String: String]?,
         body: [String: Any]?,
-        httpMethod: String,
+        httpMethod: HTTPMethod,
         mapResponseTo model: T.Type
     ) -> Future<T, Error> {
-        var finalUrl = url
-        if let parameters = parameters {
-            guard let queryAddedURL = addQueryParameters(to: url, using: parameters) else {
-                return Future { promise in
-                    promise(.failure(NetworkError.invalidURL))
-                }
-            }
-            finalUrl = queryAddedURL
-        }
-        
-        var request =  URLRequest(url: finalUrl)
-        addBasicHeaders(to: &request, httpMethod: httpMethod, body: body)
+        let requestBuilder = URLRequestBuilder(baseURL: url)
+            .setMethod(httpMethod)
+            .setQueryParameters(parameters)
+            .setHeaders([:])
+            .setBody(body)
         
         return Future<T, Error> { [weak self] promise in
             guard let self = self else {
                 promise(.failure(NetworkError.unknown))
                 return
             }
+            let request = requestBuilder.build()
             URLSession.shared.dataTaskPublisher(for: request)
                 .tryMap { (data, response) -> Data in
                     guard let httpResponse = response as? HTTPURLResponse,
@@ -50,7 +44,7 @@ extension PrimeAPI {
                         throw NetworkError.responseError
                     }
                     if (self.enableLogging) {
-                        self.logRequestDetails(url: url, headers: request.allHTTPHeaderFields, httpMethod: httpMethod, requestBody: body)
+                        self.logRequestDetails(url: url, headers: request.allHTTPHeaderFields, httpMethod: httpMethod.rawValue, requestBody: body)
                         self.logResponseDetails(response: httpResponse, responseBody: data)
                     }
                     return data
