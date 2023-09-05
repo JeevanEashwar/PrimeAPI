@@ -8,6 +8,16 @@
 import Foundation
 import Combine
 
+public protocol PrimeAPISession {
+    func getSessionPublisher(request: URLRequest) -> AnyPublisher<URLSession.DataTaskPublisher.Output, URLSession.DataTaskPublisher.Failure>
+}
+
+extension URLSession: PrimeAPISession {
+    public func getSessionPublisher(request: URLRequest) -> AnyPublisher<URLSession.DataTaskPublisher.Output, URLSession.DataTaskPublisher.Failure> {
+        return URLSession.shared.dataTaskPublisher(for: request).eraseToAnyPublisher()
+    }
+}
+
 extension PrimeAPI {
     /// Makes a network call with the specified configuration.
     ///
@@ -20,50 +30,26 @@ extension PrimeAPI {
     /// - Returns: A `Future` that emits the decoded response value of type `T` or an error of type `Error`.
     public func makeNetworkCall<T: Decodable>(
         url: URL,
-        parameters: [String: Any]?,
+        parameters: [String: String]?,
         body: [String: Any]?,
-        httpMethod: String,
+        httpMethod: HTTPMethod,
         mapResponseTo model: T.Type
     ) -> Future<T, Error> {
-        var finalUrl = url
-        if let parameters = parameters {
-            guard let queryAddedURL = addQueryParameters(to: url, using: parameters) else {
-                return Future { promise in
-                    promise(.failure(NetworkError.invalidURL))
-                }
-            }
-            finalUrl = queryAddedURL
-        }
-        
-        var request =  URLRequest(url: finalUrl)
-        addBasicHeaders(to: &request, httpMethod: httpMethod, body: body)
+        let requestBuilder = URLRequestBuilder(baseURL: url)
+            .setMethod(httpMethod)
+            .setQueryParameters(parameters)
+            .setBody(body)
+            .setAcceptHeader()
+            .setContentTypeHeader()
         
         return Future<T, Error> { [weak self] promise in
             guard let self = self else {
                 promise(.failure(NetworkError.unknown))
                 return
             }
-            URLSession.shared.dataTaskPublisher(for: request)
-                .tryMap { (data, response) -> Data in
-                    guard let httpResponse = response as? HTTPURLResponse,
-                          (200...299).contains(httpResponse.statusCode) else {
-                        throw NetworkError.responseError
-                    }
-                    if (self.enableLogging) {
-                        self.logRequestDetails(url: url, headers: request.allHTTPHeaderFields, httpMethod: httpMethod, requestBody: body)
-                        self.logResponseDetails(response: httpResponse, responseBody: data)
-                    }
-                    return data
-                }
-                .tryMap { data in
-                    do {
-                        let decodedObject = try JSONDecoder().decode(T.self, from: data)
-                        return decodedObject
-                    } catch {
-                        print("Decoding Error: \(error)")
-                        throw error
-                    }
-                }
+            let request = requestBuilder.build()
+            self.getDataTaskPublisher(request: request)
+                .decode(type: T.self, decoder: JSONDecoder())
                 .receive(on: RunLoop.main)
                 .sink(receiveCompletion: {(completion) in
                     if case let .failure(error) = completion {

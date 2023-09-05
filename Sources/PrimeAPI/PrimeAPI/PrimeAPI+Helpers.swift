@@ -6,48 +6,9 @@
 //
 
 import Foundation
+import Combine
 
 extension PrimeAPI {
-    /// Adds query parameters to a given URL.
-    ///
-    /// - Parameters:
-    ///   - url: The URL to which the query parameters will be added.
-    ///   - parameters: A dictionary containing the query parameters to be added.
-    /// - Returns: The modified URL with the added query parameters, or nil if the URL components cannot be constructed.
-    public func addQueryParameters(
-        to url: URL,
-        using parameters: [String: Any]
-    ) -> URL? {
-        var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        let queryItems = parameters.map { URLQueryItem(name: $0.key, value: String(describing: $0.value)) }
-        urlComponents?.queryItems = queryItems
-        guard let finalURL = urlComponents?.url else {
-            return nil
-        }
-        return finalURL
-    }
-    
-    /// Adds basic headers to a URLRequest.
-    ///
-    /// - Parameters:
-    ///   - request: The inout URLRequest to which the headers will be added.
-    ///   - httpMethod: The HTTP method to be set for the request.
-    ///   - body: A dictionary representing the request body, if applicable.
-    public func addBasicHeaders(
-        to request: inout URLRequest,
-        httpMethod: String,
-        body: [String: Any]?
-    ) {
-        request.httpMethod = httpMethod
-        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.addValue("application/json", forHTTPHeaderField: "Accept")
-        if let authorizationHeader = authorizationToken {
-            request.addValue("Bearer \(authorizationHeader)", forHTTPHeaderField: "Authorization")
-        }
-        if let body = body {
-            request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
-        }
-    }
     
     /// Configures the authorization header for future network requests.
     ///
@@ -64,19 +25,44 @@ extension PrimeAPI {
         self.authorizationToken = token
     }
     
+    /// Enable or disable logging of network requests and responses to the console.
     public func logsRequestAndResponseToConsole(enable: Bool) {
         self.enableLogging = enable
     }
     
+    /// Set a custom URLSession for network requests.
+    /// By default it is `URLSession.shared`. Set this to a mockURLSession object to avoid actual API callsfor unit testing,
+    public func setURLSession(session: PrimeAPISession) {
+        self.urlSession = session
+    }
+    
+    /// takes a reference of Data task publisher and logs the request and response
+    public func getDataTaskPublisher(request: URLRequest) -> AnyPublisher<Data, Error> {
+        return self.urlSession.getSessionPublisher(request: request)
+            .tryMap { (data, response) -> Data in
+                guard let httpResponse = response as? HTTPURLResponse,
+                      (200...299).contains(httpResponse.statusCode) else {
+                    throw NetworkError.responseError
+                }
+                if (self.enableLogging) {
+                    self.logRequestDetails(url: request.url, headers: request.allHTTPHeaderFields, httpMethod: request.httpMethod, requestBody: self.dataToDictionary(data: request.httpBody))
+                    self.logResponseDetails(response: httpResponse, responseBody: data)
+                }
+                return data
+            }
+            .eraseToAnyPublisher()
+    }
+    
     /// Print request details in the console
     func logRequestDetails(
-        url: URL,
+        url: URL?,
         headers: [String: String]?,
-        httpMethod: String,
+        httpMethod: String?,
         requestBody: [String: Any]?
     ) {
         print("################# NETWORK CALL REQUEST ####################")
-        print("Request URL: \(url)")
+        print("Request URL: \(String(describing: url))")
+        print("HTTP method: \(String(describing: httpMethod))")
         
         if let headers = headers {
             print("Headers:")
@@ -106,4 +92,26 @@ extension PrimeAPI {
         }
         print("################# END ####################")
     }
+    
+    /// Converts a Data object containing JSON data into a dictionary of [String: Any].
+    ///
+    /// - Parameters:
+    ///   - data: The Data object to be deserialized into a dictionary.
+    /// - Returns: A dictionary of [String: Any] if deserialization succeeds; otherwise, nil.
+    func dataToDictionary(data: Data?) -> [String: Any]? {
+        do {
+            // Check if the input data is not nil and attempt JSON deserialization.
+            if let data = data, let dictionary = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                // If deserialization succeeds, return the resulting dictionary.
+                return dictionary
+            }
+        } catch {
+            // If an error occurs during deserialization, catch and handle the error.
+            print("Error deserializing data to dictionary: \(error)")
+        }
+        
+        // Return nil if deserialization fails or if input data is nil.
+        return nil
+    }
+    
 }
