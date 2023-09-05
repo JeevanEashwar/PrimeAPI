@@ -9,24 +9,6 @@ import Foundation
 import Combine
 
 extension PrimeAPI {
-    /// Adds query parameters to a given URL.
-    ///
-    /// - Parameters:
-    ///   - url: The URL to which the query parameters will be added.
-    ///   - parameters: A dictionary containing the query parameters to be added.
-    /// - Returns: The modified URL with the added query parameters, or nil if the URL components cannot be constructed.
-    public func addQueryParameters(
-        to url: URL,
-        using parameters: [String: Any]
-    ) -> URL? {
-        var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        let queryItems = parameters.map { URLQueryItem(name: $0.key, value: String(describing: $0.value)) }
-        urlComponents?.queryItems = queryItems
-        guard let finalURL = urlComponents?.url else {
-            return nil
-        }
-        return finalURL
-    }
     
     /// Configures the authorization header for future network requests.
     ///
@@ -50,13 +32,13 @@ extension PrimeAPI {
     
     /// Set a custom URLSession for network requests.
     /// By default it is `URLSession.shared`. Set this to a mockURLSession object to avoid actual API callsfor unit testing,
-    public func setURLSession(session: URLSession) {
+    public func setURLSession(session: PrimeAPISession) {
         self.urlSession = session
     }
     
     /// takes a reference of Data task publisher and logs the request and response
     public func getDataTaskPublisher(request: URLRequest) -> AnyPublisher<Data, Error> {
-        return self.urlSession.dataTaskPublisher(for: request)
+        return self.urlSession.getSessionPublisher(request: request)
             .tryMap { (data, response) -> Data in
                 guard let httpResponse = response as? HTTPURLResponse,
                       (200...299).contains(httpResponse.statusCode) else {

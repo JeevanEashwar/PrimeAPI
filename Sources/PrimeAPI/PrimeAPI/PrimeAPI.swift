@@ -9,7 +9,7 @@ public class PrimeAPI {
     var authorizationToken: String?
     
     /// By default it is `URLSession.shared`. Set this to a mockURLSession object to avoid actual API callsfor unit testing,
-    var urlSession: URLSession
+    var urlSession: PrimeAPISession
     
     private init() {
         urlSession = URLSession.shared

@@ -8,6 +8,16 @@
 import Foundation
 import Combine
 
+public protocol PrimeAPISession {
+    func getSessionPublisher(request: URLRequest) -> AnyPublisher<URLSession.DataTaskPublisher.Output, URLSession.DataTaskPublisher.Failure>
+}
+
+extension URLSession: PrimeAPISession {
+    public func getSessionPublisher(request: URLRequest) -> AnyPublisher<URLSession.DataTaskPublisher.Output, URLSession.DataTaskPublisher.Failure> {
+        return URLSession.shared.dataTaskPublisher(for: request).eraseToAnyPublisher()
+    }
+}
+
 extension PrimeAPI {
     /// Makes a network call with the specified configuration.
     ///
