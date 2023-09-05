@@ -38,27 +38,8 @@ extension PrimeAPI {
                 return
             }
             let request = requestBuilder.build()
-            URLSession.shared.dataTaskPublisher(for: request)
-                .tryMap { (data, response) -> Data in
-                    guard let httpResponse = response as? HTTPURLResponse,
-                          (200...299).contains(httpResponse.statusCode) else {
-                        throw NetworkError.responseError
-                    }
-                    if (self.enableLogging) {
-                        self.logRequestDetails(url: url, headers: request.allHTTPHeaderFields, httpMethod: httpMethod.rawValue, requestBody: body)
-                        self.logResponseDetails(response: httpResponse, responseBody: data)
-                    }
-                    return data
-                }
-                .tryMap { data in
-                    do {
-                        let decodedObject = try JSONDecoder().decode(T.self, from: data)
-                        return decodedObject
-                    } catch {
-                        print("Decoding Error: \(error)")
-                        throw error
-                    }
-                }
+            self.getDataTaskPublisher(request: request)
+                .decode(type: T.self, decoder: JSONDecoder())
                 .receive(on: RunLoop.main)
                 .sink(receiveCompletion: {(completion) in
                     if case let .failure(error) = completion {
