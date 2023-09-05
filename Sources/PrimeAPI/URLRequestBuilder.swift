@@ -44,8 +44,26 @@ public class URLRequestBuilder {
     /// - Returns: The `URLRequestBuilder` instance for method chaining.
     func setHeaders(_ headers: [String: String]) -> URLRequestBuilder {
         self.headers = headers
-        self.headers["Content-Type"] = "application/json"
-        self.headers["Accept"] = "application/json"
+        return self
+    }
+    
+    /// Set the Accept header for the URL request.
+    ///
+    /// - Parameter headers: A dictionary of headers to be added to the request.
+    /// - Returns: The `URLRequestBuilder` instance for method chaining.
+    @discardableResult
+    func setAcceptHeader() -> URLRequestBuilder {
+        self.headers[Constants.AcceptHeader] = Constants.ApplicationJSONValue
+        return self
+    }
+    
+    /// Set the Content-Type header for the URL request.
+    ///
+    /// - Parameter headers: A dictionary of headers to be added to the request.
+    /// - Returns: The `URLRequestBuilder` instance for method chaining.
+    @discardableResult
+    func setContentTypeHeader() -> URLRequestBuilder {
+        self.headers[Constants.ContentTypeHeader] = Constants.ApplicationJSONValue
         return self
     }
     
@@ -107,9 +125,8 @@ public class URLRequestBuilder {
     func build() -> URLRequest {
         // Construct the URL
         var urlComponents = URLComponents(url: self.baseURL, resolvingAgainstBaseURL: false)
-        urlComponents?.path = self.path
-        urlComponents?.queryItems = self.queryParameters?.map { URLQueryItem(name: $0, value: $1) }
-        
+        let queryItems = self.queryParameters?.map { URLQueryItem(name: $0.key, value: String(describing: $0.value)) }
+        urlComponents?.queryItems = queryItems
         guard let url = urlComponents?.url else {
             fatalError("Invalid URL")
         }
@@ -122,7 +139,5 @@ public class URLRequestBuilder {
         
         return request
     }
-
-
 }
 

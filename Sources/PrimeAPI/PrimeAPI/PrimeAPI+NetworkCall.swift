@@ -28,8 +28,9 @@ extension PrimeAPI {
         let requestBuilder = URLRequestBuilder(baseURL: url)
             .setMethod(httpMethod)
             .setQueryParameters(parameters)
-            .setHeaders([:])
             .setBody(body)
+            .setAcceptHeader()
+            .setContentTypeHeader()
         
         return Future<T, Error> { [weak self] promise in
             guard let self = self else {
