@@ -41,6 +41,8 @@ final class PrimeAPITests: XCTestCase {
     
     func test_getCall() {
         subjectUnderTest.setURLSession(session: successMockSession)
+        subjectUnderTest.logsRequestAndResponseToConsole(enable: true)
+        XCTAssertTrue(subjectUnderTest.enableLogging)
         let sampleURL = URL(string: "https://sampleurl.com")!
         _ = subjectUnderTest.get(from: sampleURL, parameters: [:], mapResponseTo: Fact.self)
         XCTAssertTrue(assertingFlag)
